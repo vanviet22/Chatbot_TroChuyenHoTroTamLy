@@ -1,0 +1,21 @@
+# 🧠 Python venv
+venv/
+.env
+backend/.env
+
+# __pycache__ và file tạm
+__pycache__/
+*.pyc
+
+# VSCode, IDE configs
+.vscode/
+.idea/
+
+# Node (frontend)
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# Hệ thống
+.DS_Store
+Thumbs.db
