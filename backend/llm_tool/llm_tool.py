@@ -1,36 +1,39 @@
 from langchain.tools import BaseTool
-from typing import Optional, Type
-from pydantic import BaseModel, Field
-import requests
+from pydantic import BaseModel, PrivateAttr
+from typing import Type, Optional
 import logging
+from llm_utils import generate_response
 
-
-# Class cho tool llm
 class LLMInput(BaseModel):
-    query: str = Field(..., description = "Câu hỏi hoặc tâm sự của người dùng")
-# endpoint llm service để đưa câu hỏi và lấy câu trả lời
-llm_url = "http://localhost:8000/"
-logging.basicConfig(level=logging.INFO)
+    query: str
+
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
 class LLMTool(BaseTool):
-    name: str="llm_normal"
-    description: str = ("Trợ lý AI dùng để trả lời các câu hỏi KHÔNG liên quan đến tài liệu nội bộ. "
-                        "Trọng tâm là tư vấn, lắng nghe, khuyến khích và hỗ trợ tinh thần người dùng."
-    )
-    args_schema: Type[BaseModel]= LLMInput
+    name: str = "llm_normal"
+    description: str = ("Trợ lý AI dùng để trả lời các câu hỏi bình thường KHÔNG liên quan đến tài liệu nội bộ. "
+                        "Trọng tâm là tư vấn, lắng nghe, khuyến khích và hỗ trợ tinh thần người dùng.")
+    args_schema: Type[BaseModel] = LLMInput
     return_direct: bool = False
-    
+
+    # ✅ private attributes để lưu model/tokenizer
+    _model: Optional[any] = PrivateAttr()
+    _tokenizer: Optional[any] = PrivateAttr()
+
+    def __init__(self, tokenizer, model=None, **kwargs):
+        super().__init__(**kwargs)
+        object.__setattr__(self, "_model", model)
+        object.__setattr__(self, "_tokenizer", tokenizer)
+
     def _run(self, query: str, run_manager: Optional = None) -> str:
-        #xử lý prompt và câu hỏi
         combined_message = f"Người dùng chia sẻ: {query}"
-        
-        #hàm  đưa câu hỏi cho endpoin và lấy câu trả lời
-        logger.info("Đang gọi tới llm")
+        logger.info("Đang gọi tới LLM")
         try:
-             llm_response = requests.post(llm_url + "/response", json={
-                "message": combined_message
-            })
-             self._last_response= llm_response.json()
-             return self._last_response.get("content", "Không có phản hồi")
+            response_text = generate_response(self._tokenizer,self._model, combined_message)
+            return response_text
         except Exception as e:
             return f"Lỗi gọi LLM Tool: {str(e)}"
+
+# llm = LLMTool()
+# print("câu trả lời:", llm._run("bạn là ai"))

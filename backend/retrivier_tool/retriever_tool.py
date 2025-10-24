@@ -12,8 +12,10 @@ from .vectorizer_cnlthd import run_vectorizer
 from dotenv import load_dotenv
 from pathlib import Path
 import logging
-
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from llm_utils import generate_response
 load_dotenv()
+from pydantic import PrivateAttr
 
 # Đây là file của RetrieverTool hay RAG
 class RetrieveInput(BaseModel):
@@ -22,7 +24,7 @@ class RetrieveInput(BaseModel):
 class RetrieverTool(BaseTool):
     name: str = "retrieve_tool"
     description: str = (
-        "Công cụ này được sử dụng để truy xuất và cung cấp thông tin đáng tin cậy "
+        "Công cụ này được sử dụng để truy xuất và cung cấp thông tin đã có "
         "liên quan đến tâm lý học và sức khỏe tinh thần. "
         "Nó hỗ trợ người dùng hiểu rõ hơn về cảm xúc, nguyên nhân của căng thẳng, "
         "và các kỹ năng ứng phó hoặc tư duy tích cực dựa trên tài liệu chuyên ngành. "
@@ -35,8 +37,12 @@ class RetrieverTool(BaseTool):
     _k: int = PrivateAttr(default=3)
     _llm_url: str = PrivateAttr(default="http://localhost:8000/")
     _logger: logging.Logger = PrivateAttr(default=logging.getLogger(__name__))
+    _tokenizer: AutoTokenizer = PrivateAttr()
+    _model: AutoModelForCausalLM = PrivateAttr()
 
-    def __init__(self, vector_store_path: Optional[str] = None,
+    def __init__(self, tokenizer,
+                 model =None,
+                 vector_store_path: Optional[str] = None,
                  k: int = 1,
                  llm_url: str = "http://localhost:8000/",
                  **kwargs) -> None:
@@ -48,26 +54,30 @@ class RetrieverTool(BaseTool):
         # configure logger
         logging.basicConfig(level=logging.INFO)
         self._logger = logging.getLogger(__name__)
-
+        #model
+        object.__setattr__(self, "_tokenizer", tokenizer)
+        object.__setattr__(self, "_model", model)
         # determine default vector store path relative to package if not provided
         if vector_store_path is None:
             base = Path(__file__).resolve().parents[1]
             vector_store_path = str((base / 'data' / 'vector_store').resolve())
 
         try:
+            # Chỉ load embeddings khi vector store chưa tồn tại
             if not os.path.exists(vector_store_path):
                 self._logger.info("Vector store chưa tồn tại, đang tạo mới...")
+                # Chỉ tạo embeddings khi build vector mới
+                embedding_model = HuggingFaceEmbeddings(
+                    model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+                )
                 run_vectorizer()
             else:
                 self._logger.info("Vector store đã tồn tại, bỏ qua bước vectorizer.")
+                embedding_model = HuggingFaceEmbeddings(
+                    model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+                )
 
-            embedding_model = HuggingFaceEmbeddings(
-                model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-            )
-
-            if not os.path.exists(vector_store_path):
-                raise FileNotFoundError(f"Vector store path không tồn tại: {vector_store_path}")
-
+            # Load vector store
             vector_store = FAISS.load_local(
                 vector_store_path,
                 embeddings=embedding_model,
@@ -103,10 +113,12 @@ class RetrieverTool(BaseTool):
         prompt = f"""Dưới đây là một số tài liệu liên quan:\n{context}\n\n hãy dựa vào tài liệu và trả lời cho chia sẻ của người dùng: {query}"""
 
         try:
-            llm_response = requests.post(self._llm_url + "/response", json={
-                "message": prompt
-            })
-            self._last_response=llm_response.json()
-            return self._last_response.get("content", " Không có phản hồi ")
+            # llm_response = requests.post(self._llm_url + "/response", json={
+            #     "message": prompt
+            # })
+            # self._last_response=llm_response.json()
+            # return self._last_response.get("content", " Không có phản hồi ")
+            response_text = generate_response(self._tokenizer,self._model, prompt)
+            return response_text
         except Exception as e:
             return f"Lỗi gọi LLM Tool: {str(e)}"
