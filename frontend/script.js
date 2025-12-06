@@ -10,6 +10,7 @@ window.onload = () => {
   botMsg.className = "message bot";
   botMsg.innerText = "Chào bạn! Hôm nay bạn cảm thấy thế nào? Cứ thoải mái chia sẻ với mình nhé.";
   chatBody.appendChild(botMsg);
+
   conversation.push({ role: "bot", content: botMsg.innerText });
 };
 
@@ -18,15 +19,17 @@ sendBtn.addEventListener("click", async () => {
   const msg = input.value.trim();
   if (msg === "") return;
 
+  // Hiển thị tin nhắn user
   const userMsg = document.createElement("div");
   userMsg.className = "message user";
   userMsg.innerText = msg;
   chatBody.appendChild(userMsg);
+
   input.value = "";
   conversation.push({ role: "user", content: msg });
 
   sendBtn.disabled = true;
-  await sendToServer();
+  await sendToServer(msg);
   sendBtn.disabled = false;
 });
 
@@ -34,28 +37,31 @@ input.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !sendBtn.disabled) sendBtn.click();
 });
 
-async function sendToServer() {
-  const userMessages = conversation.filter(msg => msg.role === "user").map(msg => msg.content);
-  const message = userMessages[userMessages.length - 1];
-  const history = userMessages.length > 1 ? userMessages.slice(-3, -1).map(m => ({ content: m })) : [];
 
+async function sendToServer(message) {
   try {
     const response = await fetch("http://127.0.0.1:8000/chatbot", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, history }),
+      body: JSON.stringify({
+        message: message   // ✔ Backend chỉ cần đúng field này
+      }),
     });
 
     if (!response.ok) throw new Error("Lỗi khi gọi backend");
     const data = await response.json();
 
+    // Hiển thị tin nhắn bot
     const botMsg = document.createElement("div");
     botMsg.className = "message bot";
-    botMsg.innerText = data.content;
+    botMsg.innerText = data.content;   // ✔ Backend trả về content
     chatBody.appendChild(botMsg);
+
     conversation.push({ role: "bot", content: data.content });
+
   } catch (error) {
     console.error(error);
+
     const botMsg = document.createElement("div");
     botMsg.className = "message bot";
     botMsg.innerText = "Có lỗi khi kết nối với máy chủ.";

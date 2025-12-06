@@ -4,18 +4,17 @@ from langchain.tools import BaseTool
 from langchain_community.vectorstores import FAISS
 import faiss
 from langchain_community.embeddings import HuggingFaceEmbeddings
-# from langchain.callbacks.manager import CallbackManagerForToolRun
 from langchain_core.callbacks import CallbackManagerForToolRun
 import os
+os.environ["HF_HOME"] = r"D:\HuggingFace_Cache"
+os.environ["HF_HUB_CACHE"] = r"D:\HuggingFace_Cache\hub"
 import requests
 from .vectorizer_cnlthd import run_vectorizer
 from dotenv import load_dotenv
 from pathlib import Path
 import logging
-from transformers import AutoTokenizer, AutoModelForCausalLM
 from llm_utils import generate_response
 load_dotenv()
-from pydantic import PrivateAttr
 
 # Đây là file của RetrieverTool hay RAG
 class RetrieveInput(BaseModel):
@@ -37,11 +36,8 @@ class RetrieverTool(BaseTool):
     _k: int = PrivateAttr(default=3)
     _llm_url: str = PrivateAttr(default="http://localhost:8000/")
     _logger: logging.Logger = PrivateAttr(default=logging.getLogger(__name__))
-    _tokenizer: AutoTokenizer = PrivateAttr()
-    _model: AutoModelForCausalLM = PrivateAttr()
 
-    def __init__(self, tokenizer,
-                 model =None,
+    def __init__(self, 
                  vector_store_path: Optional[str] = None,
                  k: int = 1,
                  llm_url: str = "http://localhost:8000/",
@@ -54,9 +50,6 @@ class RetrieverTool(BaseTool):
         # configure logger
         logging.basicConfig(level=logging.INFO)
         self._logger = logging.getLogger(__name__)
-        #model
-        object.__setattr__(self, "_tokenizer", tokenizer)
-        object.__setattr__(self, "_model", model)
         # determine default vector store path relative to package if not provided
         if vector_store_path is None:
             base = Path(__file__).resolve().parents[1]
@@ -113,12 +106,7 @@ class RetrieverTool(BaseTool):
         prompt = f"""Dưới đây là một số tài liệu liên quan:\n{context}\n\n hãy dựa vào tài liệu và trả lời cho chia sẻ của người dùng: {query}"""
 
         try:
-            # llm_response = requests.post(self._llm_url + "/response", json={
-            #     "message": prompt
-            # })
-            # self._last_response=llm_response.json()
-            # return self._last_response.get("content", " Không có phản hồi ")
-            response_text = generate_response(self._tokenizer,self._model, prompt)
+            response_text = generate_response(prompt)
             return response_text
         except Exception as e:
             return f"Lỗi gọi LLM Tool: {str(e)}"

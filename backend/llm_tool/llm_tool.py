@@ -17,20 +17,15 @@ class LLMTool(BaseTool):
     args_schema: Type[BaseModel] = LLMInput
     return_direct: bool = False
 
-    # ✅ private attributes để lưu model/tokenizer
-    _model: Optional[any] = PrivateAttr()
-    _tokenizer: Optional[any] = PrivateAttr()
 
-    def __init__(self, tokenizer, model=None, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        object.__setattr__(self, "_model", model)
-        object.__setattr__(self, "_tokenizer", tokenizer)
 
     def _run(self, query: str, run_manager: Optional = None) -> str:
         combined_message = f"Người dùng chia sẻ: {query}"
         logger.info("Đang gọi tới LLM")
         try:
-            response_text = generate_response(self._tokenizer,self._model, combined_message)
+            response_text = generate_response(combined_message)
             return response_text
         except Exception as e:
             return f"Lỗi gọi LLM Tool: {str(e)}"

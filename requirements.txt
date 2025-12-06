@@ -42,3 +42,5 @@ tabulate
 sentence-transformers
 langchain-huggingface
 hf_xet
+pypdf
+langchain-groq
