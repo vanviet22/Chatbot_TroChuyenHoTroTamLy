@@ -1,23 +1,24 @@
 
-🤖 LangChain-Powered Tâm Lý Support Chatbot
+# 🤖 LangChain-Powered Tâm Lý Support Chatbot
+
 Tìm hiểu LangChain Framework & Ứng dụng xây dựng Chatbot hỗ trợ tâm lý
 
 Đây là dự án nghiên cứu và phát triển chatbot đồng hành – hỗ trợ tâm lý được xây dựng trên nền tảng LangChain, ứng dụng kiến trúc RAG và Intelligent Agent nhằm cung cấp trải nghiệm trò chuyện tự nhiên, giàu ý nghĩa và đáng tin cậy.
 
-🌟 Tính Năng Nổi Bật
-🧠 1. Trò chuyện đồng hành (Conversational Memory)
+### 🌟 Tính Năng Nổi Bật
+  - 🧠 1. Trò chuyện đồng hành (Conversational Memory)
 
-Ghi nhớ ngữ cảnh trò chuyện dài hạn.
+    + Ghi nhớ ngữ cảnh trò chuyện dài hạn.
 
-Sử dụng MySQL để lưu trữ và quản lý lịch sử hội thoại.
+    + Sử dụng MySQL để lưu trữ và quản lý lịch sử hội thoại.
 
-Giúp chatbot phản hồi tự nhiên, cá nhân hóa.
+    + Giúp chatbot phản hồi tự nhiên, cá nhân hóa.
 
-🤖 2. Hệ thống Agent thông minh
+  - 🤖 2. Hệ thống Agent thông minh
 
-Agent đóng vai trò “bộ não điều phối”.
+    + Agent đóng vai trò “bộ não điều phối”.
 
-Tự động chọn tool phù hợp (RAG, web search, cache…).
+    + Tự động chọn tool phù hợp (RAG, web search, cache…).
 
 Linh hoạt xử lý đa dạng yêu cầu người dùng.
 
@@ -56,6 +57,7 @@ Vector DB	FAISS
 Database	MySQL (cache + conversational memory)
 Frontend	HTML, CSS, JavaScript
 📁 Cấu Trúc Dự Án
+
 <img width="286" height="529" alt="image" src="https://github.com/user-attachments/assets/84a2d562-0c6e-4d25-a3ce-c7733c94b371" />
 
 
